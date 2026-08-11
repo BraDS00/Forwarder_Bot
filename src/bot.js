@@ -314,7 +314,7 @@ bot.action(/^target:g:(-?\d+)$/, async (ctx) => {
 
     await ctx.answerCbQuery();
 
-    if (!isOwner(ctx)) {
+    if (!isPrivateChat(ctx)) {
         return;
     }
 
@@ -349,7 +349,7 @@ bot.action(/^target:u:(\d+)$/, async (ctx) => {
 
     await ctx.answerCbQuery();
 
-    if (!isOwner(ctx)) {
+    if (!isPrivateChat(ctx)) {
         return;
     }
 
@@ -384,7 +384,7 @@ bot.action('target:send', async (ctx) => {
 
     await ctx.answerCbQuery();
 
-    if (!isOwner(ctx)) {
+    if (!isPrivateChat(ctx)) {
         return;
     }
 
@@ -457,7 +457,7 @@ bot.action('target:cancel', async (ctx) => {
 
     await ctx.answerCbQuery();
 
-    if (!isOwner(ctx)) {
+    if (!isPrivateChat(ctx)) {
         return;
     }
 
