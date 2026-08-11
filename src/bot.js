@@ -1,3 +1,7 @@
+function isPrivateChat(ctx) {
+    return ctx.chat?.type === 'private';
+}
+
 const { Telegraf, Markup } = require('telegraf');
 
 const {
