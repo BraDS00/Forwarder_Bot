@@ -15,22 +15,35 @@ Welcome to Forwarder Bot! 👋
 Write your explanation here.
 `;
 
-// /start displays the explanation text and its buttons.
-bot.start((ctx) => {
+const { addUser } = require('./storage');
+
+bot.start(async (ctx) => {
+
+    addUser(ctx.from);
+
     return ctx.reply(
         startMessage,
         Markup.inlineKeyboard([
-            // This button takes the entire first row (full width).
-            [Markup.button.callback('Forward a Message', 'forward')],
-
-            // These two buttons share the second row (50% each).
             [
-                Markup.button.callback('Add Bot to a New Group', 'add'),
-                Markup.button.callback('Already Joined Groups', 'listgroups'),
+                Markup.button.callback(
+                    'Forward a Message',
+                    'forward'
+                )
             ],
-        ]),
+            [
+                Markup.button.callback(
+                    'Add Bot to a New Group',
+                    'add'
+                ),
+                Markup.button.callback(
+                    'Already Joined Groups',
+                    'listgroups'
+                )
+            ]
+        ])
     );
 });
+
 
 // These are temporary responses. We will build their real features next.
 bot.command('forward', (ctx) => {
