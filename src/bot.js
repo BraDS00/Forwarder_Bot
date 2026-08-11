@@ -41,8 +41,27 @@ bot.command('add', (ctx) => {
     return ctx.reply('Add Bot to a New Group selected.');
 });
 
-bot.command('listgroups', (ctx) => {
-    return ctx.reply('Already Joined Groups selected.');
+const { getGroups } = require('./storage');
+
+bot.action('listgroups', async (ctx) => {
+    await ctx.answerCbQuery();
+
+    const groups = getGroups();
+
+    if (groups.length === 0) {
+        return ctx.reply(
+            'The bot has not joined any groups yet.'
+        );
+    }
+
+    let text = 'Groups I can forward messages to:\n\n';
+
+    for (const group of groups) {
+        text += `• ${group.title}\n`;
+        text += `  ID: ${group.id}\n\n`;
+    }
+
+    return ctx.reply(text);
 });
 
 // Makes the buttons behave like their matching commands.
