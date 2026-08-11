@@ -108,7 +108,7 @@ function buildTargetKeyboard(session) {
 // START
 // ---------------------------------------------------------
 
-bot.start(async (ctx) => {
+bot.start((ctx) => {
 
     if (ctx.chat.type !== 'private') {
         return;
@@ -117,7 +117,7 @@ bot.start(async (ctx) => {
     addUser(ctx.from);
 
     return ctx.reply(
-        'Welcome to ForwarderBot!\n\nChoose an option:',
+        startMessage,
         Markup.inlineKeyboard([
             [
                 Markup.button.callback(
