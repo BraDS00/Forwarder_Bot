@@ -17,14 +17,9 @@ const {
 } = require('./forwarder');
 
 const token = process.env.BOT_TOKEN;
-const ownerId = Number(process.env.OWNER_ID);
 
 if (!token) {
     throw new Error('BOT_TOKEN is missing. Add it to your .env file.');
-}
-
-if (!ownerId) {
-    throw new Error('OWNER_ID is missing. Add it to your .env file.');
 }
 
 const bot = new Telegraf(token);
@@ -41,10 +36,6 @@ const bot = new Telegraf(token);
  * }
  */
 const sessions = new Map();
-
-function isOwner(ctx) {
-    return ctx.from?.id === ownerId;
-}
 
 function getSession(userId) {
     if (!sessions.has(userId)) {
@@ -117,6 +108,10 @@ function buildTargetKeyboard(session) {
 // ---------------------------------------------------------
 
 bot.start(async (ctx) => {
+
+        if (!isPrivateChat(ctx)) {
+        return;
+    }
 
     addUser(ctx.from);
 
@@ -263,8 +258,8 @@ bot.action('forward', async (ctx) => {
 
     await ctx.answerCbQuery();
 
-    if (!isOwner(ctx)) {
-        return ctx.reply('You are not authorized to operate this bot.');
+    if (!isPrivateChat(ctx)) {
+        return;
     }
 
     const userId = ctx.from.id;
@@ -285,7 +280,7 @@ bot.action('forward', async (ctx) => {
 
 bot.on('message', async (ctx) => {
 
-    if (!isOwner(ctx)) {
+    if (!isPrivateChat(ctx)) {
         return;
     }
 
