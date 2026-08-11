@@ -66,3 +66,29 @@ bot.catch((error, ctx) => {
 });
 
 module.exports = bot;
+
+const { addGroup } = require('./storage');
+
+bot.on('my_chat_member', async (ctx) => {
+    const update = ctx.myChatMember;
+
+    const chat = update.chat;
+
+    const newStatus = update.new_chat_member.status;
+
+    if (
+        chat.type === 'group' ||
+        chat.type === 'supergroup'
+    ) {
+        if (
+            newStatus === 'member' ||
+            newStatus === 'administrator'
+        ) {
+            addGroup(chat);
+
+            console.log(
+                `Bot joined group: ${chat.title} (${chat.id})`
+            );
+        }
+    }
+});
