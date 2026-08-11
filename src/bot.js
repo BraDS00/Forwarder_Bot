@@ -1,9 +1,3 @@
-function isPrivateChat(ctx) {
-    return ctx.chat?.type === 'private';
-}
-
-const { Telegraf, Markup } = require('telegraf');
-
 const {
     addGroup,
     removeGroup,
@@ -11,6 +5,13 @@ const {
     addUser,
     getUsers
 } = require('./storage');
+
+function isPrivateChat(ctx) {
+    return ctx.chat?.type === 'private';
+}
+
+const { Telegraf, Markup } = require('telegraf');
+
 
 const {
     forwardToTargets
@@ -107,20 +108,16 @@ function buildTargetKeyboard(session) {
 // START
 // ---------------------------------------------------------
 
-bot.start(async (ctx) => {
+bot.start((ctx) => {
 
-        if (!isPrivateChat(ctx)) {
+    if (ctx.chat.type !== 'private') {
         return;
     }
 
     addUser(ctx.from);
 
     return ctx.reply(
-        `
-Welcome to ForwarderBot.
-
-Select what you want to do.
-        `,
+        startMessage,
         Markup.inlineKeyboard([
             [
                 Markup.button.callback(
@@ -151,22 +148,22 @@ bot.action('add', async (ctx) => {
 
     await ctx.answerCbQuery();
 
-    if (!isOwner(ctx)) {
-        return ctx.reply('You are not authorized to operate this bot.');
+    if (ctx.chat.type !== 'private') {
+        return;
     }
 
-    const me = await ctx.telegram.getMe();
+    const botInfo = await ctx.telegram.getMe();
 
-    const url =
-        `https://t.me/${me.username}?startgroup=true`;
+    const addToGroupUrl =
+        `https://t.me/${botInfo.username}?startgroup=true`;
 
     return ctx.reply(
-        'Choose the group where you want to add the bot:',
+        'Choose the group where you want to add me:',
         Markup.inlineKeyboard([
             [
                 Markup.button.url(
                     'Add Bot to a New Group',
-                    url
+                    addToGroupUrl
                 )
             ]
         ])
@@ -182,8 +179,8 @@ bot.action('listgroups', async (ctx) => {
 
     await ctx.answerCbQuery();
 
-    if (!isOwner(ctx)) {
-        return ctx.reply('You are not authorized to operate this bot.');
+    if (ctx.chat.type !== 'private') {
+        return;
     }
 
     const groups = getGroups();
@@ -194,15 +191,15 @@ bot.action('listgroups', async (ctx) => {
         );
     }
 
-    let text = 'Groups currently registered:\n\n';
+    let message = 'Groups the bot has joined:\n\n';
 
     for (const group of groups) {
-        text += `• ${group.title}\n`;
-        text += `  ID: ${group.id}\n`;
-        text += `  Type: ${group.type}\n\n`;
+        message += `• ${group.title}\n`;
+        message += `  ID: ${group.id}\n`;
+        message += `  Type: ${group.type}\n\n`;
     }
 
-    return ctx.reply(text);
+    return ctx.reply(message);
 });
 
 
@@ -222,11 +219,11 @@ bot.on('my_chat_member', async (ctx) => {
         return;
     }
 
-    const status = update.new_chat_member.status;
+    const newStatus = update.new_chat_member.status;
 
     if (
-        status === 'member' ||
-        status === 'administrator'
+        newStatus === 'member' ||
+        newStatus === 'administrator'
     ) {
         addGroup(chat);
 
@@ -238,8 +235,8 @@ bot.on('my_chat_member', async (ctx) => {
     }
 
     if (
-        status === 'left' ||
-        status === 'kicked'
+        newStatus === 'left' ||
+        newStatus === 'kicked'
     ) {
         removeGroup(chat.id);
 
