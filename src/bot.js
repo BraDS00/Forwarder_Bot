@@ -51,9 +51,25 @@ bot.action('forward', (ctx) => {
     return ctx.reply('Forward a Message selected.');
 });
 
-bot.action('add', (ctx) => {
-    ctx.answerCbQuery();
-    return ctx.reply('Add Bot to a New Group selected.');
+bot.action('add', async (ctx) => {
+    await ctx.answerCbQuery();
+
+    const botUsername = process.env.BOT_USERNAME;
+
+    const url =
+        `https://t.me/${botUsername}?startgroup=true`;
+
+    return ctx.reply(
+        'Choose the group where you want to add me:',
+        Markup.inlineKeyboard([
+            [
+                Markup.button.url(
+                    'Add Bot to a New Group',
+                    url
+                )
+            ]
+        ])
+    );
 });
 
 bot.action('listgroups', (ctx) => {
