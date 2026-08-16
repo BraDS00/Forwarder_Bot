@@ -18,10 +18,15 @@ server.listen(PORT, '0.0.0.0', () => {
 });
 
 async function startBot() {
-    await bot.launch();
 
-    console.log('Forwarder Bot is running.');
-    console.log('Bot is ready to forward messages.');
+    try {
+        await bot.launch();
+        console.log('Forwarder Bot is running.');
+        console.log('Bot is ready to forward messages.');
+    } catch (errr) {
+        console.error('Error launching the bot:', errr);
+    }
+
 }
 
 startBot().catch((error) => {
