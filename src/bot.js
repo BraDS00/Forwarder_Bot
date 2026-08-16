@@ -6,9 +6,9 @@ const {
     getUsers
 } = require('./storage');
 
-// function isPrivateChat(ctx) {
-//     return ctx.chat?.type === 'private';
-// }
+function isPrivateChat(ctx) {
+    return ctx.chat && ctx.chat.type === 'private';
+}
 
 const { Telegraf, Markup } = require('telegraf');
 
@@ -110,7 +110,7 @@ function buildTargetKeyboard(session) {
 
 bot.start((ctx) => {
 
-    if (ctx.chat.type !== 'private') {
+    if (!isPrivateChat(ctx)) {
         return;
     }
 
@@ -148,7 +148,7 @@ bot.action('add', async(ctx) => {
 
     await ctx.answerCbQuery();
 
-    if (ctx.chat.type !== 'private') {
+    if (!isPrivateChat(ctx)) {
         return;
     }
 
@@ -179,7 +179,7 @@ bot.action('listgroups', async(ctx) => {
 
     await ctx.answerCbQuery();
 
-    if (ctx.chat.type !== 'private') {
+    if (!isPrivateChat(ctx)) {
         return;
     }
 
@@ -281,13 +281,11 @@ bot.on('message', async(ctx) => {
         return;
     }
 
-    if (ctx.chat.type !== 'private') {
+    const messageText = ctx.message.text;
+
+    if (messageText && messageText.startsWith('/')) {
         return;
     }
-
-    // if (ctx.message.text ? .startsWith('/')) {
-    //     return;
-    // }
 
     const session = sessions.get(ctx.from.id);
 
@@ -478,4 +476,6 @@ bot.catch((error, ctx) => {
         `Unhandled error for update ${ctx.update.update_id}:`,
         error
     );
-})
+});
+
+module.exports = bot;
