@@ -6,9 +6,9 @@ const {
     getUsers
 } = require('./storage');
 
-function isPrivateChat(ctx) {
-    return ctx.chat ? .type === 'private';
-}
+// function isPrivateChat(ctx) {
+//     return ctx.chat?.type === 'private';
+// }
 
 const { Telegraf, Markup } = require('telegraf');
 
@@ -285,9 +285,9 @@ bot.on('message', async(ctx) => {
         return;
     }
 
-    if (ctx.message.text ? .startsWith('/')) {
-        return;
-    }
+    // if (ctx.message.text ? .startsWith('/')) {
+    //     return;
+    // }
 
     const session = sessions.get(ctx.from.id);
 
@@ -478,6 +478,4 @@ bot.catch((error, ctx) => {
         `Unhandled error for update ${ctx.update.update_id}:`,
         error
     );
-});
-
-module.exports = bot;
+})
