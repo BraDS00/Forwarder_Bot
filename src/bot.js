@@ -7,7 +7,7 @@ const {
 } = require('./storage');
 
 function isPrivateChat(ctx) {
-    return ctx.chat?.type === 'private';
+    return ctx.chat ? .type === 'private';
 }
 
 const { Telegraf, Markup } = require('telegraf');
@@ -74,9 +74,9 @@ function buildTargetKeyboard(session) {
     for (const user of users) {
         const selected = session.targets.includes(user.id);
 
-        const name = user.username
-            ? `@${user.username}`
-            : user.firstName || String(user.id);
+        const name = user.username ?
+            `@${user.username}` :
+            user.firstName || String(user.id);
 
         rows.push([
             Markup.button.callback(
@@ -117,7 +117,7 @@ bot.start((ctx) => {
     addUser(ctx.from);
 
     return ctx.reply(
-        startMessage,
+        'Welcome to the Forwarder Bot! What would you like to do?',
         Markup.inlineKeyboard([
             [
                 Markup.button.callback(
@@ -144,7 +144,7 @@ bot.start((ctx) => {
 // ADD BOT TO GROUP
 // ---------------------------------------------------------
 
-bot.action('add', async (ctx) => {
+bot.action('add', async(ctx) => {
 
     await ctx.answerCbQuery();
 
@@ -175,7 +175,7 @@ bot.action('add', async (ctx) => {
 // GROUP LIST
 // ---------------------------------------------------------
 
-bot.action('listgroups', async (ctx) => {
+bot.action('listgroups', async(ctx) => {
 
     await ctx.answerCbQuery();
 
@@ -207,7 +207,7 @@ bot.action('listgroups', async (ctx) => {
 // BOT GROUP MEMBERSHIP CHANGES
 // ---------------------------------------------------------
 
-bot.on('my_chat_member', async (ctx) => {
+bot.on('my_chat_member', async(ctx) => {
 
     const update = ctx.myChatMember;
     const chat = update.chat;
@@ -251,7 +251,7 @@ bot.on('my_chat_member', async (ctx) => {
 // FORWARD FLOW
 // ---------------------------------------------------------
 
-bot.action('forward', async (ctx) => {
+bot.action('forward', async(ctx) => {
 
     await ctx.answerCbQuery();
 
@@ -275,7 +275,7 @@ bot.action('forward', async (ctx) => {
 // RECEIVE MESSAGE TO FORWARD
 // ---------------------------------------------------------
 
-bot.on('message', async (ctx) => {
+bot.on('message', async(ctx) => {
 
     if (!isPrivateChat(ctx)) {
         return;
@@ -285,7 +285,7 @@ bot.on('message', async (ctx) => {
         return;
     }
 
-    if (ctx.message.text?.startsWith('/')) {
+    if (ctx.message.text ? .startsWith('/')) {
         return;
     }
 
@@ -310,7 +310,7 @@ bot.on('message', async (ctx) => {
 // SELECT / DESELECT GROUP
 // ---------------------------------------------------------
 
-bot.action(/^target:g:(-?\d+)$/, async (ctx) => {
+bot.action(/^target:g:(-?\d+)$/, async(ctx) => {
 
     await ctx.answerCbQuery();
 
@@ -345,7 +345,7 @@ bot.action(/^target:g:(-?\d+)$/, async (ctx) => {
 // SELECT / DESELECT USER
 // ---------------------------------------------------------
 
-bot.action(/^target:u:(\d+)$/, async (ctx) => {
+bot.action(/^target:u:(\d+)$/, async(ctx) => {
 
     await ctx.answerCbQuery();
 
@@ -380,7 +380,7 @@ bot.action(/^target:u:(\d+)$/, async (ctx) => {
 // SEND
 // ---------------------------------------------------------
 
-bot.action('target:send', async (ctx) => {
+bot.action('target:send', async(ctx) => {
 
     await ctx.answerCbQuery();
 
@@ -453,7 +453,7 @@ bot.action('target:send', async (ctx) => {
 // CANCEL
 // ---------------------------------------------------------
 
-bot.action('target:cancel', async (ctx) => {
+bot.action('target:cancel', async(ctx) => {
 
     await ctx.answerCbQuery();
 
