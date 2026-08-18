@@ -25,6 +25,38 @@ function isPrivateChat(ctx) {
     return ctx.chat && ctx.chat.type === 'private';
 }
 
+function isGroupChat(ctx) {
+    return ctx.chat && (
+        ctx.chat.type === 'group' ||
+        ctx.chat.type === 'supergroup'
+    );
+}
+
+const recentlyAddedGroups = new Map();
+const RECENT_GROUP_ADD_TIMEOUT = 60 * 1000;
+
+function markGroupAsRecentlyAdded(chatId) {
+    recentlyAddedGroups.set(chatId, Date.now());
+}
+
+function wasRecentlyAdded(chatId) {
+    const addedAt = recentlyAddedGroups.get(chatId);
+
+    recentlyAddedGroups.delete(chatId);
+
+    return addedAt && Date.now() - addedAt < RECENT_GROUP_ADD_TIMEOUT;
+}
+
+async function deleteGroupStartMessage(ctx) {
+    try {
+        await ctx.deleteMessage();
+    } catch (error) {
+        console.warn(
+            `Could not delete the group start message in ${ctx.chat.id}. ` +
+            'Give the bot the Delete Messages admin permission to remove it.'
+        );
+    }
+}
 
 /*
  * Temporary forwarding sessions.
@@ -109,37 +141,52 @@ function buildTargetKeyboard(session) {
 // START
 // ---------------------------------------------------------
 
-bot.start((ctx) => {
+bot.start(async(ctx) => {
 
-    if (!isPrivateChat(ctx)) {
+    if (isPrivateChat(ctx)) {
+        addUser(ctx.from);
+
+        return ctx.reply(
+            'Welcome to the Forwarder Bot! What would you like to do?',
+            Markup.inlineKeyboard([
+                [
+                    Markup.button.callback(
+                        'Forward a Message',
+                        'forward'
+                    )
+                ],
+                [
+                    Markup.button.callback(
+                        'Add Bot to a New Group',
+                        'add'
+                    ),
+                    Markup.button.callback(
+                        'Already Joined Groups',
+                        'listgroups'
+                    )
+                ]
+            ])
+        );
+    }
+
+    if (!isGroupChat(ctx)) {
         return;
     }
 
-    addUser(ctx.from);
+    const isNewGroup = wasRecentlyAdded(ctx.chat.id);
 
-    return ctx.reply(
-        'Welcome to the Forwarder Bot! What would you like to do?',
-        Markup.inlineKeyboard([
-            [
-                Markup.button.callback(
-                    'Forward a Message',
-                    'forward'
-                )
-            ],
-            [
-                Markup.button.callback(
-                    'Add Bot to a New Group',
-                    'add'
-                ),
-                Markup.button.callback(
-                    'Already Joined Groups',
-                    'listgroups'
-                )
-            ]
-        ])
-    );
+    // addGroup is idempotent: it adds missing groups but never duplicates one.
+    addGroup(ctx.chat);
+
+    if (!isNewGroup) {
+        await ctx.telegram.sendMessage(
+            ctx.from.id,
+            'This bot has been already added to this group!'
+        );
+    }
+
+    return deleteGroupStartMessage(ctx);
 });
-
 
 // ---------------------------------------------------------
 // ADD BOT TO GROUP
@@ -156,7 +203,7 @@ bot.action('add', async(ctx) => {
     const botInfo = await ctx.telegram.getMe();
 
     const addToGroupUrl =
-        `https://t.me/${botInfo.username}?startgroup=false`;
+        `https://t.me/${botInfo.username}?startgroup`;
 
     return ctx.reply(
         'Choose the group where you want to add me:',
@@ -227,7 +274,7 @@ bot.on('my_chat_member', async(ctx) => {
         newStatus === 'administrator'
     ) {
         addGroup(chat);
-
+        markGroupAsRecentlyAdded(chat.id);
         console.log(
             `Bot joined group: ${chat.title} (${chat.id})`
         );
