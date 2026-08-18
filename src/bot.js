@@ -156,7 +156,7 @@ bot.action('add', async(ctx) => {
     const botInfo = await ctx.telegram.getMe();
 
     const addToGroupUrl =
-        `https://t.me/${botInfo.username}?startgroup=true`;
+        `https://t.me/${botInfo.username}?startgroup=false`;
 
     return ctx.reply(
         'Choose the group where you want to add me:',
