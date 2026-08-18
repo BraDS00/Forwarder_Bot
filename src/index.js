@@ -1,4 +1,8 @@
 require('dotenv').config();
+const {
+    connectDatabase,
+    closeDatabase
+} = require('./storage');
 
 const http = require('http');
 const bot = require('./bot');
@@ -18,7 +22,9 @@ server.listen(PORT, '0.0.0.0', () => {
 });
 
 async function startBot() {
+    await connectDatabase();
     await bot.launch();
+
     console.log('Forwarder Bot is running.');
     console.log('Bot is ready to forward messages.');
 }

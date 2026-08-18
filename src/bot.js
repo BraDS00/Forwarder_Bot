@@ -7,6 +7,12 @@ const {
     getUsers
 } = require('./storage');
 
+await addUser(ctx.from);
+await addGroup(chat);
+await removeGroup(chat.id);
+const groups = await getGroups();
+const users = await getUsers();
+
 const { Telegraf, Markup } = require('telegraf');
 
 const {
@@ -88,8 +94,8 @@ function clearSession(userId) {
 }
 
 function buildTargetKeyboard(session) {
-    const groups = getGroups();
-    const users = getUsers();
+    const groups = await getGroups();
+    const users = await getUsers();
 
     const rows = [];
 
@@ -183,6 +189,8 @@ bot.start(async(ctx) => {
             ctx.from.id,
             'This bot has been already added to this group!'
         );
+        bot.reply('This bot has been already added to this group!');
+
     }
 
     return deleteGroupStartMessage(ctx);
@@ -347,7 +355,7 @@ bot.on('message', async(ctx) => {
 
     return ctx.reply(
         'Select the destinations:',
-        buildTargetKeyboard(session)
+        await buildTargetKeyboard(session)
     );
 });
 
@@ -382,7 +390,7 @@ bot.action(/^target:g:(-?\d+)$/, async(ctx) => {
     }
 
     return ctx.editMessageReplyMarkup(
-        buildTargetKeyboard(session).reply_markup
+        await buildTargetKeyboard(session).reply_markup
     );
 });
 
@@ -417,7 +425,7 @@ bot.action(/^target:u:(\d+)$/, async(ctx) => {
     }
 
     return ctx.editMessageReplyMarkup(
-        buildTargetKeyboard(session).reply_markup
+        await buildTargetKeyboard(session).reply_markup
     );
 });
 

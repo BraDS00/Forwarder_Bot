@@ -1,96 +1,197 @@
-const fs = require('fs');
-const path = require('path');
+// const fs = require('fs');
+// const path = require('path');
 
-const DATA_DIR = path.join(__dirname, '../data');
-const DATA_FILE = path.join(DATA_DIR, 'targets.json');
+// const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, '../data');
+// const DATA_FILE = path.join(DATA_DIR, 'targets.json');
 
-function ensureStorage() {
-    if (!fs.existsSync(DATA_DIR)) {
-        fs.mkdirSync(DATA_DIR, { recursive: true });
+// function ensureStorage() {
+//     if (!fs.existsSync(DATA_DIR)) {
+//         fs.mkdirSync(DATA_DIR, { recursive: true });
+//     }
+
+//     if (!fs.existsSync(DATA_FILE)) {
+//         fs.writeFileSync(
+//             DATA_FILE,
+//             JSON.stringify({ groups: [], users: [] }, null, 2)
+//         );
+//     }
+// }
+
+// function loadTargets() {
+//     ensureStorage();
+
+//     return JSON.parse(
+//         fs.readFileSync(DATA_FILE, 'utf8')
+//     );
+// }
+
+// function saveTargets(targets) {
+//     ensureStorage();
+
+//     fs.writeFileSync(
+//         DATA_FILE,
+//         JSON.stringify(targets, null, 2)
+//     );
+// }
+
+// function addGroup(chat) {
+//     const targets = loadTargets();
+
+//     const exists = targets.groups.some(
+//         group => group.id === chat.id
+//     );
+
+//     if (!exists) {
+//         targets.groups.push({
+//             id: chat.id,
+//             title: chat.title,
+//             type: chat.type
+//         });
+
+//         saveTargets(targets);
+//     }
+// }
+
+// function removeGroup(chatId) {
+//     const targets = loadTargets();
+
+//     targets.groups = targets.groups.filter(
+//         group => group.id !== chatId
+//     );
+
+//     saveTargets(targets);
+// }
+
+// function getGroups() {
+//     return loadTargets().groups;
+// }
+
+// function addUser(user) {
+//     const targets = loadTargets();
+
+//     const exists = targets.users.some(
+//         existing => existing.id === user.id
+//     );
+
+//     if (!exists) {
+//         targets.users.push({
+//             id: user.id,
+//             username: user.username || null,
+//             firstName: user.first_name || null
+//         });
+
+//         saveTargets(targets);
+//     }
+// }
+
+// function getUsers() {
+//     return loadTargets().users;
+// }
+
+// module.exports = {
+//     loadTargets,
+//     saveTargets,
+//     addGroup,
+//     removeGroup,
+//     getGroups,
+//     addUser,
+//     getUsers
+// };
+
+
+const { MongoClient } = require('mongodb');
+
+let client;
+let database;
+
+async function connectDatabase() {
+    if (database) {
+        return database;
     }
 
-    if (!fs.existsSync(DATA_FILE)) {
-        fs.writeFileSync(
-            DATA_FILE,
-            JSON.stringify({ groups: [], users: [] }, null, 2)
-        );
+    const uri = process.env.MONGODB_URI;
+    const databaseName = process.env.MONGODB_DB || 'forwarder_bot';
+
+    if (!uri) {
+        throw new Error('MONGODB_URI is missing from the environment variables.');
+    }
+
+    client = new MongoClient(uri);
+
+    await client.connect();
+
+    database = client.db(databaseName);
+
+    await database.collection('groups').createIndex({ id: 1 }, { unique: true });
+
+    await database.collection('users').createIndex({ id: 1 }, { unique: true });
+
+    console.log(`Connected to MongoDB database: ${databaseName}`);
+
+    return database;
+}
+
+async function closeDatabase() {
+    if (client) {
+        await client.close();
+        client = null;
+        database = null;
     }
 }
 
-function loadTargets() {
-    ensureStorage();
+function getDatabase() {
+    if (!database) {
+        throw new Error('MongoDB is not connected yet.');
+    }
 
-    return JSON.parse(
-        fs.readFileSync(DATA_FILE, 'utf8')
-    );
+    return database;
 }
 
-function saveTargets(targets) {
-    ensureStorage();
-
-    fs.writeFileSync(
-        DATA_FILE,
-        JSON.stringify(targets, null, 2)
-    );
-}
-
-function addGroup(chat) {
-    const targets = loadTargets();
-
-    const exists = targets.groups.some(
-        group => group.id === chat.id
-    );
-
-    if (!exists) {
-        targets.groups.push({
+async function addGroup(chat) {
+    await getDatabase().collection('groups').updateOne({ id: chat.id }, {
+        $set: {
             id: chat.id,
             title: chat.title,
             type: chat.type
-        });
-
-        saveTargets(targets);
-    }
+        }
+    }, { upsert: true });
 }
 
-function removeGroup(chatId) {
-    const targets = loadTargets();
-
-    targets.groups = targets.groups.filter(
-        group => group.id !== chatId
-    );
-
-    saveTargets(targets);
+async function removeGroup(chatId) {
+    await getDatabase().collection('groups').deleteOne({
+        id: chatId
+    });
 }
 
-function getGroups() {
-    return loadTargets().groups;
+async function getGroups() {
+    return getDatabase()
+        .collection('groups')
+        .find()
+        .sort({ title: 1 })
+        .toArray();
 }
 
-function addUser(user) {
-    const targets = loadTargets();
-
-    const exists = targets.users.some(
-        existing => existing.id === user.id
-    );
-
-    if (!exists) {
-        targets.users.push({
+async function addUser(user) {
+    await getDatabase().collection('users').updateOne({ id: user.id }, {
+        $set: {
             id: user.id,
             username: user.username || null,
             firstName: user.first_name || null
-        });
-
-        saveTargets(targets);
-    }
+        }
+    }, { upsert: true });
 }
 
-function getUsers() {
-    return loadTargets().users;
+async function getUsers() {
+    return getDatabase()
+        .collection('users')
+        .find()
+        .sort({ firstName: 1 })
+        .toArray();
 }
 
 module.exports = {
-    loadTargets,
-    saveTargets,
+    connectDatabase,
+    closeDatabase,
     addGroup,
     removeGroup,
     getGroups,
