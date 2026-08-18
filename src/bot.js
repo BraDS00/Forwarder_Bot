@@ -7,12 +7,6 @@ const {
     getUsers
 } = require('./storage');
 
-await addUser(ctx.from);
-await addGroup(chat);
-await removeGroup(chat.id);
-const groups = await getGroups();
-const users = await getUsers();
-
 const { Telegraf, Markup } = require('telegraf');
 
 const {
@@ -93,7 +87,7 @@ function clearSession(userId) {
     sessions.delete(userId);
 }
 
-function buildTargetKeyboard(session) {
+async function buildTargetKeyboard(session) {
     const groups = await getGroups();
     const users = await getUsers();
 
@@ -150,7 +144,7 @@ function buildTargetKeyboard(session) {
 bot.start(async(ctx) => {
 
     if (isPrivateChat(ctx)) {
-        addUser(ctx.from);
+        await addUser(ctx.from);
 
         return ctx.reply(
             'Welcome to the Forwarder Bot! What would you like to do?',
@@ -182,15 +176,13 @@ bot.start(async(ctx) => {
     const isNewGroup = wasRecentlyAdded(ctx.chat.id);
 
     // addGroup is idempotent: it adds missing groups but never duplicates one.
-    addGroup(ctx.chat);
+    await addGroup(ctx.chat);
 
     if (!isNewGroup) {
         await ctx.telegram.sendMessage(
             ctx.from.id,
             'This bot has been already added to this group!'
         );
-        bot.reply('This bot has been already added to this group!');
-
     }
 
     return deleteGroupStartMessage(ctx);
@@ -239,7 +231,7 @@ bot.action('listgroups', async(ctx) => {
         return;
     }
 
-    const groups = getGroups();
+    const groups = await getGroups();
 
     if (groups.length === 0) {
         return ctx.reply(
@@ -281,7 +273,7 @@ bot.on('my_chat_member', async(ctx) => {
         newStatus === 'member' ||
         newStatus === 'administrator'
     ) {
-        addGroup(chat);
+        await addGroup(chat);
         markGroupAsRecentlyAdded(chat.id);
         console.log(
             `Bot joined group: ${chat.title} (${chat.id})`
@@ -294,7 +286,7 @@ bot.on('my_chat_member', async(ctx) => {
         newStatus === 'left' ||
         newStatus === 'kicked'
     ) {
-        removeGroup(chat.id);
+        await removeGroup(chat.id);
 
         console.log(
             `Bot left group: ${chat.title} (${chat.id})`
@@ -390,7 +382,7 @@ bot.action(/^target:g:(-?\d+)$/, async(ctx) => {
     }
 
     return ctx.editMessageReplyMarkup(
-        await buildTargetKeyboard(session).reply_markup
+        (await buildTargetKeyboard(session)).reply_markup
     );
 });
 
@@ -425,7 +417,7 @@ bot.action(/^target:u:(\d+)$/, async(ctx) => {
     }
 
     return ctx.editMessageReplyMarkup(
-        await buildTargetKeyboard(session).reply_markup
+        (await buildTargetKeyboard(session)).reply_markup
     );
 });
 

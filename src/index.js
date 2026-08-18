@@ -34,12 +34,17 @@ startBot().catch((error) => {
     process.exit(1);
 });
 
-process.once('SIGINT', () => {
-    bot.stop('SIGINT');
+async function stopApplication(signal) {
+    bot.stop(signal);
+    await closeDatabase();
+
     server.close();
+}
+
+process.once('SIGINT', () => {
+    stopApplication('SIGINT');
 });
 
 process.once('SIGTERM', () => {
-    bot.stop('SIGTERM');
-    server.close();
+    stopApplication('SIGTERM');
 });
