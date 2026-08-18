@@ -1,3 +1,4 @@
+//---------------Importing Libraries
 const {
     addGroup,
     removeGroup,
@@ -6,24 +7,24 @@ const {
     getUsers
 } = require('./storage');
 
-function isPrivateChat(ctx) {
-    return ctx.chat && ctx.chat.type === 'private';
-}
-
 const { Telegraf, Markup } = require('telegraf');
-
 
 const {
     forwardToTargets
 } = require('./forwarder');
 
+//-----------Declaring Variables and Functions
 const token = process.env.BOT_TOKEN;
+const bot = new Telegraf(token);
 
 if (!token) {
     throw new Error('BOT_TOKEN is missing. Add it to your .env file.');
 }
 
-const bot = new Telegraf(token);
+function isPrivateChat(ctx) {
+    return ctx.chat && ctx.chat.type === 'private';
+}
+
 
 /*
  * Temporary forwarding sessions.
@@ -75,7 +76,7 @@ function buildTargetKeyboard(session) {
         const selected = session.targets.includes(user.id);
 
         const name = user.username ?
-            `@${user.username}` :
+            `@${user.username}(Yourself)` :
             user.firstName || String(user.id);
 
         rows.push([
